@@ -1,0 +1,38 @@
+
+library(rstanarm)
+library(bayesplot)
+library(ggplot2)
+
+
+
+
+H = gl(2,1,labels = c("support","oppose"))
+G = gl(2,4,labels = c("male","female"))
+I = gl(2,2,labels = c("support","oppose"))
+Count = c(76,160,6,25,114,181,11,48)
+health = data.frame(H,G,I,Count);health
+
+fit2 <- glm(Count ~ H + G + I + H:G + H:I + G:I,
+                family  = "poisson",
+                data    = health)
+summary(fit2)
+fit <- stan_glm(Count ~ H + G + I + H:G + H:I + G:I,
+                family  = "poisson",
+                data    = health,
+                iter    = 4000,
+                chains  = 4,
+                warmup  = 500,
+                thin    = 1,
+                seed    = 12345,
+                control = list(adapt_delta=0.99))
+summary(fit)
+stan_dens(fit)
+stan_hist(fit)
+pairs(fit)
+plot(fit, plotfun = "trace")
+pp_check(fit, plotfun = "stat", stat = "mean")
+pp_check(fit, plotfun = "dens_overlay")
+prior_summary(fit)
+posterior <- as.data.frame(fit) ;head(fit)
+mean(posterior$`Hoppose:Gfemale`<0)
+mean(posterior$`Hoppose:Ioppose`<0)
